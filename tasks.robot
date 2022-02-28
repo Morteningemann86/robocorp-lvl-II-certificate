@@ -4,19 +4,27 @@ Documentation     Orders robots from RobotSpareBin Industries Inc.
 ...               Saves the screenshot of the ordered robot.
 ...               Embeds the screenshot of the robot to the PDF receipt.
 ...               Creates ZIP archive of the receipts and the images.
-Library           RPA.Browser.Selenium    auto_close=${False}
+Library           RPA.Browser.Selenium    #auto_close=${False}
 Library           RPA.HTTP
 Library           RPA.Tables
 Library           RPA.PDF
 Library           RPA.Desktop
 Library           RPA.Archive    #Allows you to zip files and folders
+Library           Dialogs    #Allows you make dialog boxes
+Library           RPA.Dialogs
 
 *** Keywords ***
+Ask user for input on CSV-file path
+    Add text input    url    label=URL for CSV-file
+    ${response}=    run dialog    height=300    width=700
+    [Return]    ${response.url}
+
 Open the robot order website
     Open Available Browser    https://robotsparebinindustries.com/#/robot-order
 
 Get orders
-    Download    https://robotsparebinindustries.com/orders.csv    overwrite=True
+    [Arguments]    ${url}
+    Download    ${url}    overwrite=True    # https://robotsparebinindustries.com/orders.csv
     ${orders}    Read table from CSV    orders.csv    header=True
     [Return]    ${orders}
 
@@ -66,10 +74,14 @@ Create a ZIP file of the receipts
     #how to zip
     Archive Folder With Zip    ${OUTPUTDIR}/receipts    all_purchases.zip
 
+Log out and close browser
+    Close Browser
+
 *** Tasks ***
 Order robots from RobotSpareBin Industries Inc
+    ${url}=    Ask user for input on CSV-file path
     Open the robot order website
-    ${orders}    Get orders
+    ${orders}    Get orders    ${url}
     FOR    ${row}    IN    @{orders}
         Close the annoying modal
         Fill the form    ${row}
@@ -81,3 +93,4 @@ Order robots from RobotSpareBin Industries Inc
         Go to order another robot
     END
     Create a ZIP file of the receipts
+    [Teardown]    Log out and close browser
