@@ -9,18 +9,27 @@ Library           RPA.HTTP
 Library           RPA.Tables
 Library           RPA.PDF
 Library           RPA.Desktop
-Library           RPA.Archive    #Allows you to zip files and folders
-Library           Dialogs    #Allows you make dialog boxes
+Library           RPA.Archive    # Allows you to zip files and folders
+Library           Dialogs    # Allows you make dialog boxes
 Library           RPA.Dialogs
+Library           RPA.Robocorp.Vault
+Library           Process
 
 *** Keywords ***
+Get secret from vault
+    #TODO: setup up the Control Room Vault
+    ${secret}=    Get Secret    Secret_url
+    log    ${secret}[url]
+
 Ask user for input on CSV-file path
     Add text input    url    label=URL for CSV-file
-    ${response}=    run dialog    height=300    width=700
+    ${response}=    run dialog    height=300    width=700    # Input the following: https://robotsparebinindustries.com/orders.csv
     [Return]    ${response.url}
 
 Open the robot order website
-    Open Available Browser    https://robotsparebinindustries.com/#/robot-order
+    ${secret}=    Get Secret    Secret_url
+    Open Available Browser    ${secret}[url]    # https://robotsparebinindustries.com/#/robot-order
+    Log    ${secret}[url]
 
 Get orders
     [Arguments]    ${url}
@@ -79,6 +88,7 @@ Log out and close browser
 
 *** Tasks ***
 Order robots from RobotSpareBin Industries Inc
+    Get secret from vault
     ${url}=    Ask user for input on CSV-file path
     Open the robot order website
     ${orders}    Get orders    ${url}
@@ -94,3 +104,4 @@ Order robots from RobotSpareBin Industries Inc
     END
     Create a ZIP file of the receipts
     [Teardown]    Log out and close browser
+#    Terminate All Processes
